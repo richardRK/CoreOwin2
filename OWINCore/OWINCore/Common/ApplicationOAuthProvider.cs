@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.OAuth;
 using OWINCore.Data;
 using System;
@@ -32,7 +33,7 @@ namespace OWINCore.Common
 
         public override async Task GrantResourceOwnerCredentials(OAuthGrantResourceOwnerCredentialsContext context)
         {
-           
+
             var user = await _appUserManager1.FindByNameAsync(context.UserName);
             if (user != null)
             {
@@ -42,7 +43,21 @@ namespace OWINCore.Common
                 identity.AddClaim(new Claim("FirstName", user.FirstName));
                 identity.AddClaim(new Claim("LastName", user.LastName));
                 identity.AddClaim(new Claim("LoggedOn", DateTime.Now.ToString()));
-                context.Validated(identity);
+                var userRoles = _appUserManager1.GetRolesAsync(user);
+
+                foreach (var roleName in userRoles.Result)
+                {
+                    identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
+                }
+
+                //return data to client
+                var additionalData = new AuthenticationProperties(new Dictionary<string, string>{
+                                                                        {
+                                                                            "role", Newtonsoft.Json.JsonConvert.SerializeObject(userRoles)
+                                                                        }
+                                                                    });
+                var token = new AuthenticationTicket(identity, additionalData);
+                context.Validated(token);
             }
             else
                 return;

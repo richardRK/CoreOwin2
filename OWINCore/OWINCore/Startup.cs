@@ -44,6 +44,10 @@ namespace OWINCore
             services.AddIdentityCore<ApplicationUser>(options => { });
             services.AddScoped<UserManager<ApplicationUser>, UserManagerUtil>();
 
+
+            services.AddIdentityCore<IdentityRole>(options => { });
+            services.AddScoped<RoleManager<IdentityRole>, RoleManagerUtil>();
+
             services.AddDbContext<ApplicationDbContext>(options =>
             {
                 options.UseSqlServer(connectionString);
